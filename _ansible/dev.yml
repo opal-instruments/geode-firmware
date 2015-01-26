@@ -1,0 +1,7 @@
+- hosts: dev
+  connection: ssh
+  sudo: yes
+  user: vagrant
+
+  roles:
+    - dev

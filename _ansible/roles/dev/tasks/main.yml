@@ -1,0 +1,20 @@
+- name: Update apt-get
+  apt: update_cache=yes
+
+- name: Install binutils-avr
+  apt: name=binutils-avr state=present
+
+- name: Install libc6-dev
+  apt: name=libc6-dev state=present
+
+- name: Install avr-libc
+  apt: name=avr-libc state=present
+
+- name: Install gcc-avr
+  apt: name=gcc-avr state=present
+
+- name: Install avrdude
+  apt: name=avrdude state=present
+
+- name: Install make
+  apt: name=make state=present
