@@ -1,0 +1,8 @@
+- name: Clone clibs/clib
+  git: repo=https://github.com/clibs/clib.git dest=/tmp/clib
+
+- name: Make clibs/clib
+  shell: make chdir=/tmp/clib
+
+- name: Install clibs/clib
+  shell: make install chdir=/tmp/clib

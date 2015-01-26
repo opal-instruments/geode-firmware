@@ -18,3 +18,11 @@
 
 - name: Install make
   apt: name=make state=present
+
+- name: Install libcurl4-gnutls-dev
+  apt: name=libcurl4-gnutls-dev state=present
+
+- name: Install git
+  apt: name=git state=present
+
+- include: clib.yml
