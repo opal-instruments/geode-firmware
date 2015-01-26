@@ -14,6 +14,7 @@ Vagrant.configure(2) do |config|
     vb.customize ['usbfilter', 'add', '0', '--target', :id, '--name', 'AVR ISPmkII Programmer', '--vendorid', '0x03eb', '--productid', '0x2ffa']
   end
 
+
    config.vm.provision "ansible" do |ansible|
      ansible.playbook = "_ansible/dev.yml"
      ansible.inventory_path = "_ansible/inventory"

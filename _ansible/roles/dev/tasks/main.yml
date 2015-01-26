@@ -13,6 +13,9 @@
 - name: Install gcc-avr
   apt: name=gcc-avr state=present
 
+- name: Install clang
+  apt: name=clang state=present
+
 - name: Install avrdude
   apt: name=avrdude state=present
 
@@ -26,3 +29,4 @@
   apt: name=git state=present
 
 - include: clib.yml
+- include: geode.yml
