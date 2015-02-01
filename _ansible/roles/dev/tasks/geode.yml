@@ -1,2 +1,20 @@
 - name: Install tiny-midi-clock
   shell: clib install opal-instruments/tiny-midi-clock -o ./deps chdir=/vagrant
+
+- name: Install automake
+  apt: name=automake state=present
+
+- name: Install libtool
+  apt: name=libtool state=present
+
+- name: Install pkg-config
+  apt: name=pkg-config state=present
+
+- name: Install texinfo
+  apt: name=texinfo state=present
+
+- name: Install texlive
+  apt: name=texlive state=present
+
+- name: Install sed
+  apt: name=sed state=present
