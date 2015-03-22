@@ -15,7 +15,7 @@
 #endif
 
 volatile float bpm = 120.0; // Default: 120.0 BPM
-volatile int pulse_count = 0;
+volatile uint32_t pulse_count = 0;
 volatile char toggle = 0;
 
 void toggle_led();
@@ -28,17 +28,29 @@ void setup() {
 }
 
 void setup_timer_interrupt() {
-  OCR0A = F_CPU / 1000000; // Sets the Output Compare Register (OCR) to count every microsecond.
+  OCR0A = F_CPU / 1000000;      // Sets the Output Compare Register (OCR) to count every microsecond.
+
+  // Takeing from startingelectronics.com tutorial
+  TCCR0A = 0x02;           // Clear Timer on Compare Match (CTC) mode
+  TIFR |= 0x01;            // Reset the Timer flag.
+  TIMSK = 0x01;            // TC0 compare match A interrupt enable
+  
+  TCCR0B = (1 << CS00);    // Select no prescaler for system clock.  
   sei();                   // enable global interrupt handler
 }
 
 ISR(TIMER0_COMPA_vect) {
   pulse_count++;
-  uint32_t uc = microseconds_per_midi_clock(bpm);
+
+  // TOOD need to bufix tiny_midi_clock so that it
+  //      will send all pulses, not just every quarter note in the beat
+  uint32_t uc = (microseconds_per_midi_clock(bpm) / 24);
+
   if(pulse_count >= uc) {
       toggle_led();
       pulse_count = 0;
   }
+  
 }
 
 void toggle_led() {
