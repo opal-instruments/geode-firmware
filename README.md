@@ -1,6 +1,6 @@
-# geode-firmware
+# quartz-firmware
 
-This project contains the firmware for Opal Instrument's Geode Timer Module.
+This project contains the firmware for Opal Instrument's Quartz Timer Module.
 
 ## getting started
 
@@ -15,3 +15,21 @@ $ vagrant up
 ```
 
 This will provision a development box on which you can freely develop the firmware for the Geode.
+
+### Building the project
+
+This project currently uses a `Makefile` to build itself.  There are a few helpful directives that you might be intersted in knowing about:
+
+  - `make clean` : Cleans the `bin`, `vendor/build`, and `vendor/libs` directories.
+  - `make fmt` : Runs [`astyle`](http://astyle.sourceforge.net/astyle.html) on all source files.
+  - `make deps` : Builds all dependent libraries and places them in `vendor/libs` for building.
+  - `make` : Performs all of the previous options, then builds the project.
+  - `make upload` : Uploads the resulting `.hex` to the a connceted Quartz board via a AVRmkII ISP programmer.
+
+In most cases, the following workflow should be sufficient to upload a new build of the project:
+
+```bash
+$ make clean
+$ make
+$ make upload
+```
