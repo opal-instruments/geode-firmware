@@ -6,7 +6,9 @@ This project contains the firmware for Opal Instrument's Quartz Timer Module.
 
 ### Vagrant
 
-This project can be developed on a Virtual Machine, which can be provisioned by [Vagrant](https://www.vagrantup.com/).  The Vagrant setup for this project is currently configured to be provisioned by the [Ansible](http://www.ansible.com/) orchaestration tool.
+This project can be developed on a Virtual Machine, but it is not required.  The virtual machine is an ubuntu instance that has the `avr-gcc` toolchain installed that is required to build and develop this project.
+
+The VM for this project is managed by [Vagrant](https://www.vagrantup.com/).  The Vagrant setup for this project is currently configured to be provisioned by the [Ansible](http://www.ansible.com/) orchaestration tool.
 
 To get started, please be sure to install both [Vagrant](https://www.vagrantup.com/) and [Ansible](http://www.ansible.com/), ensure they are both accessible in your `$PATH`, and then run the following command:
 
@@ -14,7 +16,7 @@ To get started, please be sure to install both [Vagrant](https://www.vagrantup.c
 $ vagrant up
 ```
 
-This will provision a development box on which you can freely develop the firmware for the Geode.
+This will provision a development box on which you can freely develop the firmware for the Quartz.
 
 ### Building the project
 
