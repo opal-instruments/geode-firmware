@@ -1,9 +1,10 @@
 CC=avr-gcc
+SRC=$(wildcard src/*.c)
 OBJCOPY=avr-objcopy
 LIB_DIR=./vendor/libs/
 LIBS=-static
 
-all: clean deps
+all: clean fmt deps
 	mkdir -p bin
 	$(CC) src/quartz.c -L$(LIB_DIR) $(LIBS) -mmcu=attiny2313 -Os -o bin/quartz.o
 	$(OBJCOPY) -O ihex -R .eeprom bin/quartz.o bin/quartz.hex
@@ -17,6 +18,9 @@ clean:
 	rm -rf bin
 	rm -rf vendor/build
 	rm -rf vendor/libs
+
+fmt:
+	astyle $(SRC)
 
 upload:
 	sudo avrdude -p attiny2313 -c avrisp2 -U lfuse:w:0xFF:m -U hfuse:w:0xFF:m -U efuse:w:0xFF:m -U flash:w:bin/quartz.hex:i -b 2400 
