@@ -1,3 +1,5 @@
 bin
 .vagrant
 .python-version
+vendor/build
+vendor/libs
