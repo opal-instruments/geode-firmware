@@ -20,7 +20,7 @@ clean:
 	rm -rf vendor/libs
 
 fmt:
-	astyle --style=google --align-pointer=type --align-reference=type $(SRC)
+	astyle --style=google --align-pointer=type --align-reference=type --suffix=none $(SRC)
 
 upload:
 	sudo avrdude -p attiny2313 -c avrisp2 -U lfuse:w:0xFF:m -U hfuse:w:0xFF:m -U efuse:w:0xFF:m -U flash:w:bin/quartz.hex:i -b 2400 
