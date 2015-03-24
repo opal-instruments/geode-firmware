@@ -44,7 +44,7 @@ ISR(TIMER0_COMPA_vect) {
 
   // TOOD need to bufix tiny_midi_clock so that it
   //      will send all pulses, not just every quarter note in the beat
-  uint32_t uc = (microseconds_per_midi_clock(bpm) / 24);
+  uint32_t uc = (microseconds_per_pulse(bpm));
 
   if(pulse_count >= uc) {
       toggle_led();
