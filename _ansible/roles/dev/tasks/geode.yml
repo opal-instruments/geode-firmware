@@ -1,2 +1,2 @@
 - name: Install tiny-midi-clock
-  shell: clib install opal-instruments/tiny-midi-clock -o ./deps chdir=/vagrant
+  shell: clib install opal-instruments/tiny-midi-clock -o ./vendor chdir=/vagrant
