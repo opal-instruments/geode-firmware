@@ -28,5 +28,8 @@
 - name: Install git
   apt: name=git state=present
 
+- name: Install astyle
+  apt: name=astyle state=present
+
 - include: clib.yml
 - include: quartz.yml
