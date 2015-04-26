@@ -12,7 +12,8 @@ deps:
 	mkdir -p vendor/libs
 	mkdir -p vendor/build
 	$(CC) -c vendor/tiny-midi-clock/midi_clock.c -mmcu=attiny2313 -o vendor/build/libtiny-midi-clock.o
-	ar -cvq vendor/libs/libtiny-midi-clock.a vendor/build/libtiny-midi-clock.o
+	$(CC) -c vendor/max7219-avr/max7219.c -mmcu=attiny2313 -o vendor/build/libmax7219-avr.o
+	ar -cvq vendor/libs/libtiny-midi-clock.a vendor/build/libtiny-midi-clock.o vendor/build/libmax7219-avr.o
 
 clean:
 	rm -rf bin

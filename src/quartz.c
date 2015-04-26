@@ -10,6 +10,15 @@
 #define set_input(portdir,pin) portdir &= ~(1<<pin)
 #define set_output(portdir,pin) portdir |= (1<<pin)
 
+// Lifted from an avr tutorial
+#define CLK_HIGH()  PORTB |= (1<<PB7)
+#define CLK_LOW()   PORTB &= ~(1<<PB7)
+#define CS_HIGH()   PORTB |= (1<<PB5)
+#define CS_LOW()    PORTB &= ~(1<<PB5)
+#define DATA_HIGH() PORTB |= (1<<PB0)
+#define DATA_LOW()  PORTB &= ~(1<<PB0)
+#define INIT_PORT() DDRB |= (1<<PB0) | (1<<PB5) | (1<<PB7)
+
 #ifndef F_CPU
 #define F_CPU 20000000UL
 #endif
@@ -27,6 +36,7 @@ void setup();
 void setup() {
   set_output(DDRD, LED);
   setup_timer_interrupt();
+  max7219_init();
 }
 
 void setup_timer_interrupt() {
@@ -36,14 +46,16 @@ void setup_timer_interrupt() {
   TCCR0A = 0x02;          // Clear Timer on Compare Match (CTC) mode
   TIFR |= 0x01;           // Reset the Timer flag.
   TIMSK = 0x01;           // TC0 compare match A interrupt enable
+  TCCR0B = (1 << CS00);   // Select no prescaler for timer interrupt
   
-  TCCR0B = (1 << CS00);   // Select no prescaler for system clock.  
+  CLKPR = (1 << CLKPS0);  // Select a /2 prescaler for system clock so that LED timer gets 10Mhz
+  
   sei();                  // enable global interrupt handler
 }
 
 ISR(TIMER0_COMPA_vect) {
   pulse_count++;
-  uint32_t uc = (microseconds_per_pulse(bpm));
+  uint32_t uc = (microseconds_per_pulse(bpm) / 192);
 
   if(pulse_count >= uc) {
       toggle_led();
@@ -68,3 +80,5 @@ int main(void) {
      // no-op, main loop.
    }
 }
+
+
