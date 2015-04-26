@@ -1,6 +1,6 @@
 {
     "name":"max7219-avr",
-    "version":"0.0.1",
+    "version":"1.0.0",
     "src": [
         "src/max7219.h",
         "src/max7219.c"

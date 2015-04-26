@@ -19,9 +19,10 @@ typedef struct _max7219_driver_t {
   int ddrb;
 } max7219_driver_t;
 
+max7219_driver_t * max7219_new(int clk, int cs, int data, int portb, int ddrb);
+
 void max7219_writec(max7219_driver_t *drv, uint8_t high_byte, uint8_t low_byte);
 void max7219_clear(max7219_driver_t *drv);
-void max7219_new(int clk, int cs, int data);
 void max7219_init(max7219_driver_t *drv);
 void max7219_put_setting(max7219_driver_t *drv, uint8_t mode, uint8_t val);
 

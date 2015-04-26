@@ -29,6 +29,16 @@ void max7219_clear(max7219_driver_t *drv) {
   }
 }
 
+max7219_driver_t * max7219_new(int clk, int cs, int data, int portb, int ddrb) {
+  max7219_driver_t *drv = malloc(sizeof(max7219_driver_t));
+  drv->clk   = clk;
+  drv->cs    = cs;
+  drv->data  = data;
+  drv->portb = portb;
+  drv->ddrb  = ddrb;
+  return drv;
+}
+
 // TODO: Have a way if specifying 
 void max7219_init(max7219_driver_t *drv) {
   init_port(drv);
