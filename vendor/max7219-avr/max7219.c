@@ -90,5 +90,5 @@ void data_low(max7219_driver_t *drv) {
 }
 
 void init_port(max7219_driver_t *drv) {
-  drv->ddrb |= (1<< drv->data) | (1<< drv->cs) | (1<< drv->data);
+  drv->ddrb |= (1<< drv->data) | (1<< drv->cs) | (1<< drv->clk);
 }
