@@ -1,18 +1,17 @@
 CC=avr-gcc
 OBJCOPY=avr-objcopy
 LIB_DIR=./vendor/libs/
-LIBS=-static -ltiny-midi-clock
+LIBS=-static
 
 all: clean deps
 	mkdir -p bin
-	$(CC) src/quartz.c -I./vendor -L$(LIB_DIR) $(LIBS) -mmcu=attiny2313 -o bin/quartz.o
+	$(CC) src/quartz.c -L$(LIB_DIR) $(LIBS) -mmcu=attiny2313 -Os -o bin/quartz.o
 	$(OBJCOPY) -O ihex -R .eeprom bin/quartz.o bin/quartz.hex
 
 deps:
 	mkdir -p vendor/libs
 	mkdir -p vendor/build
-	$(CC) -c vendor/tiny-midi-clock/midi_clock.c -mmcu=attiny2313 -o vendor/build/libtiny-midi-clock.o
-	ar -cvq vendor/libs/libtiny-midi-clock.a vendor/build/libtiny-midi-clock.o
+	ar -cvq vendor/libs/libtiny-midi-clock.a 
 
 clean:
 	rm -rf bin
