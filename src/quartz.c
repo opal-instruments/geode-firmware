@@ -44,6 +44,11 @@
 
 // USART constants
 #define UBRRH_PADDING 8
+#define UBRRL_MASK 255
+#define F_CPU_BAUD_RATE 40
+
+// SPI Constants
+#define MSB_16_BIT_HIGH 0x8000
 
 // Default: 120.0 BPM
 volatile float bpm = 120.0;
@@ -90,6 +95,7 @@ void start_midi();
 void clock_midi();
 void stop_midi();
 void send_midi();
+void write_uart(uint8_t character);
 
 void spi_send(uint16_t data) {
     uint8_t i;
@@ -97,7 +103,7 @@ void spi_send(uint16_t data) {
     LATCH_LOW();
 
     for (i = 0; i < 16; i++) {
-        if (data & 0X8000) {
+        if (data & MSB_16_BIT_HIGH) {
             MOSI_HIGH();
         } else {
             MOSI_LOW();
@@ -120,8 +126,8 @@ uint32_t microseconds_per_pulse(float bpm) {
 
 void usart_init() {
     // Set baud rate
-    UBRRH = MIDI_BAUD_RATE >> UBRRH_PADDING;
-    UBRRL = MIDI_BAUD_RATE;
+    UBRRH = F_CPU_BAUD_RATE >> UBRRH_PADDING;
+    UBRRL = F_CPU_BAUD_RATE &  UBRRL_MASK;
 
     // Enable TX
     UCSRB = (1 << TXEN);
@@ -172,10 +178,7 @@ ISR(TIMER1_COMPA_vect) {
     // If we have a match, clear the Flag register
     // and toggle the led.
     toggle_count++;
-
-    if(toggle_count % MIDI_CLOCK_PRECISION == 0 ) {
-        pulse++;
-    }
+    pulse++;
 
     if(toggle_count >= MIDI_CLOCK_PRECISION * MIDI_BEATS_PER_MEASURE) {
         toggle_count = 0;
@@ -207,7 +210,7 @@ void write_uart(uint8_t character) {
 }
 
 void send_midi() {
-    if(pulse == 1) {
+    if(pulse > 0) {
         clock_midi();
         pulse = 0;
     }
