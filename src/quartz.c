@@ -147,16 +147,6 @@ void draw_led() {
   }
 }
 
-void toggle_led() {
-  if(toggle) {
-    toggle = 0;
-    output_high(PORTD, LED);
-  } else {
-    toggle = 1;
-    output_low(PORTD, LED);
-  }
-}
-
 void write_char_at_digit(uint8_t character, uint8_t digit) {
   spi_send(character << CHAR_OFFSET | digit);
   _delay_ms(LED_DELAY);
