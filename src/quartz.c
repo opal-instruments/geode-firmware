@@ -50,6 +50,7 @@ volatile float bpm = 120.0;
 volatile int led = 0;
 volatile uint16_t uc = 0;
 volatile uint16_t toggle_count = 0;
+volatile int pulse = 0;
 
 // Seven Segment Display Constants
 #define CHAR0 0x3F
@@ -83,7 +84,12 @@ void setup_timer();
 void setup();
 void spi_send(uint16_t data);
 void write_char_at_digit(uint8_t character, uint8_t digit);
+void write_midi(uint8_t command, uint8_t data);
 void usart_init();
+void start_midi();
+void clock_midi();
+void stop_midi();
+void send_midi();
 
 void spi_send(uint16_t data) {
     uint8_t i;
@@ -138,6 +144,8 @@ void setup() {
     uc = microseconds_per_pulse(bpm);
 
     setup_timer();
+
+    start_midi();
 }
 
 void setup_timer() {
@@ -164,6 +172,11 @@ ISR(TIMER1_COMPA_vect) {
     // If we have a match, clear the Flag register
     // and toggle the led.
     toggle_count++;
+
+    if(toggle_count % MIDI_CLOCK_PRECISION == 0 ) {
+        pulse++;
+    }
+
     if(toggle_count >= MIDI_CLOCK_PRECISION * MIDI_BEATS_PER_MEASURE) {
         toggle_count = 0;
         toggle_led();
@@ -183,14 +196,47 @@ void write_char_at_digit(uint8_t character, uint8_t digit) {
     _delay_ms(LED_DELAY);
 }
 
+void write_midi(uint8_t command, uint8_t data) {
+    write_uart(command);
+    write_uart(data);
+}
+
+void write_uart(uint8_t character) {
+    while(!(UCSRA & (1 << UDRE))) {}
+    UDR = character;
+}
+
+void send_midi() {
+    if(pulse == 1) {
+        clock_midi();
+        pulse = 0;
+    }
+}
+
+void clock_midi() {
+    write_midi(CLOCK, 0x00);
+}
+
+void stop_midi() {
+    write_midi(STOP, 0x00);
+}
+
+void start_midi() {
+    write_midi(START, 0x00);
+}
+
 int main(void) {
     setup();
 
     while (1) {
+        // TODO: Refactor into a "draw_display" method
+        //       That decodes the current BPM into a display value
         write_char_at_digit(CHAR1, DIGIT1);
         write_char_at_digit(CHAR2, DIGIT2);
         write_char_at_digit(CHAR0 | CHARDOT, DIGIT3);
         write_char_at_digit(CHAR0, DIGIT4);
+
         draw_led();
+        send_midi();
     }
 }
