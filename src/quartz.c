@@ -287,6 +287,7 @@ void stop_midi() {
 
 void start_midi() {
     write_midi(START, 0x00);
+    write_midi(CLOCK, 0x00);
 }
 
 void set_bpm() {
