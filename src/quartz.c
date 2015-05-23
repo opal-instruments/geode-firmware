@@ -24,9 +24,10 @@
 
 #define ROTARY_PHASE_A PB1
 #define ROTARY_PHASE_B PB0
-#define INIT_ROTARY() PORTB |= (1 << ROTARY_PHASE_A) | (1 << ROTARY_PHASE_B);
-#define INIT_PCI_ROTARY() PCMSK |= (1 << ROTARY_PHASE_A) | (1 << ROTARY_PHASE_B);
+#define INIT_ROTARY() PORTB |= (1 << ROTARY_PHASE_A) | (1 << ROTARY_PHASE_B)
+#define INIT_PCI_ROTARY() PCMSK |= (1 << ROTARY_PHASE_A) | (1 << ROTARY_PHASE_B)
 #define INIT_PCI() GIMSK |= (1 << PCIE);
+#define ROTARY_PIN(rotary, pin) ((rotary >> pin) & 0x01)
 
 #ifndef F_CPU
 #define F_CPU 20000000UL
@@ -212,8 +213,37 @@ ISR(TIMER1_COMPA_vect) {
 }
 
 ISR(PCINT_vect) {
+
+    // Grab current snapshot of PINB registers
     rotary_current = PINB;
+
+    // XOR the current PINB registers
+    // with what we had last.
+    // Example:
+    //
+    // 00000000
+    // 00100000
+    //      XOR
+    // --------
+    // 00100000
+    //
+    // This indicates that there was a change
+    // on an analog pin.
+    //
+    // For active pins, this can also be used
+    // to observe no change.
+    //
+    // 00100000
+    // 00100000
+    //      XOR
+    // --------
+    // 00000000
+    //
+    // We will use this value to understand
+    // which direction the knob is being turned.
     rotary_mask = rotary_current ^ rotary_last;
+
+    // finally, set our last known value to what's current.
     rotary_last = rotary_current;
 }
 
@@ -259,22 +289,31 @@ void start_midi() {
     write_midi(START, 0x00);
 }
 
-uint8_t rotary_stationary() {
-    if(((rotary_current >> ROTARY_PHASE_A) & 0x01) == 0 && ((rotary_current >> ROTARY_PHASE_B) & 0x01) == 0) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
 void set_bpm() {
-    if(rotary_stationary() && ((rotary_mask >> ROTARY_PHASE_A) & 0x01) == 0) {
-        rotary_direction = ROTARY_LEFT;
-    } else if (rotary_stationary() && ((rotary_mask >> ROTARY_PHASE_B) & 0x01) == 0 ) {
-        rotary_direction = ROTARY_RIGHT;
-    } else if (rotary_stationary()) {
-        rotary_direction = ROTARY_NONE;
+
+    // if the rotary encoder was previously stopped
+    //   if it moved left
+    //     set left
+    //   else if it moved right
+    //     set right
+    if(ROTARY_PIN(rotary_current, ROTARY_PHASE_A) == 0 &&
+            ROTARY_PIN(rotary_current, ROTARY_PHASE_B) == 0) {
+
+        if(ROTARY_PIN(rotary_mask, ROTARY_PHASE_A) == 1) {
+            rotary_direction = ROTARY_LEFT;
+        } else if (ROTARY_PIN(rotary_mask, ROTARY_PHASE_B) == 1) {
+            rotary_direction = ROTARY_RIGHT;
+        } else {
+            rotary_direction = ROTARY_NONE;
+        }
+    } else {
+        if((rotary_direction == ROTARY_LEFT && ROTARY_PIN(rotary_mask, ROTARY_PHASE_A) == 0) ||
+                (rotary_direction == ROTARY_RIGHT && ROTARY_PIN(rotary_mask, ROTARY_PHASE_B) == 0)) {
+            rotary_direction = ROTARY_NONE;
+        }
     }
+
+    rotary_mask = 0;
 
     if(rotary_direction == ROTARY_LEFT) {
         bpm += 1;
