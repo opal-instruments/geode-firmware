@@ -120,6 +120,7 @@ void clock_midi();
 void stop_midi();
 void send_midi();
 void write_uart(uint8_t character);
+void set_bpm();
 
 void spi_send(uint16_t data) {
     uint8_t i;
@@ -245,6 +246,8 @@ ISR(PCINT_vect) {
 
     // finally, set our last known value to what's current.
     rotary_last = rotary_current;
+
+    set_bpm();
 }
 
 void draw_led() {
@@ -342,9 +345,5 @@ int main(void) {
         draw_display();
         draw_led();
         send_midi();
-
-        if(rotary_mask > 0) {
-            set_bpm();
-        }
     }
 }
