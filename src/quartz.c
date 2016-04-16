@@ -2,61 +2,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stdint.h>
-
-#define LED PD6
-#define INIT_LED() DDRD |= (1 << LED)
-#define LED_HIGH() PORTD |= (1 << LED)
-#define LED_LOW()  PORTD &= ~(1 << LED)
-
-#define CLK PB4
-#define CLK_HIGH()  PORTB |= (1 << CLK)
-#define CLK_LOW()   PORTB &= ~(1 << CLK)
-
-#define MOSI PB3
-#define MOSI_HIGH() PORTB |= (1 << MOSI)
-#define MOSI_LOW()  PORTB &= ~(1 << MOSI)
-
-#define LATCH PB2
-#define LATCH_HIGH()   PORTB |= (1 << LATCH)
-#define LATCH_LOW()    PORTB &= ~(1 << LATCH)
-
-#define INIT_PORT() DDRB |= (1 << CLK) | (1 << MOSI) | (1 << LATCH)
-
-#define ROTARY_PHASE_A PB1
-#define ROTARY_PHASE_B PB0
-#define INIT_ROTARY() PORTB |= (1 << ROTARY_PHASE_A) | (1 << ROTARY_PHASE_B)
-#define INIT_PCI_ROTARY() PCMSK |= (1 << ROTARY_PHASE_A) | (1 << ROTARY_PHASE_B)
-#define INIT_PCI() GIMSK |= (1 << PCIE);
-#define ROTARY_PIN(rotary, pin) ((rotary >> pin) & 0x01)
-
-#ifndef F_CPU
-#define F_CPU 20000000UL
-#endif
-
-// midi constants
-#define CLOCK 0xF8
-#define START 0xFA
-#define CONTINUE 0xFB
-#define STOP 0xFC
-#define MIDI_CLOCK_PRECISION 24
-#define MIDI_BEATS_PER_MEASURE 4
-
-// MIDI messages are transmitted serially at 31.25 kbit/s.
-#define MIDI_BAUD_RATE 31250
-#define MINUTE 60
-#define MICROSECOND 1000000
-
-#define THOUSAND 1000
-#define HUNDRED 100
-#define TEN 10
-
-// USART constants
-#define UBRRH_PADDING 8
-#define UBRRL_MASK 255
-#define F_CPU_BAUD_RATE 40
-
-// SPI Constants
-#define MSB_16_BIT_HIGH 0x8000
+#include "./macros.h"
 
 // Default: 120.0 BPM
 volatile float bpm = 120.0;
@@ -64,25 +10,10 @@ volatile uint8_t rotary_current = 0;
 volatile uint8_t rotary_last = 0;
 volatile uint8_t rotary_mask = 0;
 volatile uint8_t rotary_direction = 0;
-volatile int led = 0;
 volatile uint16_t uc = 0;
 volatile uint16_t toggle_count = 0;
 volatile int pulse = 0;
-
-// Seven Segment Display Constants
-#define CHAR0 0x3F
-#define CHAR1 0x06
-#define CHAR2 0x5B
-#define CHAR3 0x4F
-#define CHAR4 0x66
-#define CHAR5 0x6D
-#define CHAR6 0x7D
-#define CHAR7 0x07
-#define CHAR8 0x7F
-#define CHAR9 0x6F
-#define CHAR_DOT 0x80
-#define CHAR_NONE 0x00
-#define CHAR_LED_HIGH 0x01
+volatile uint8_t div = 0b00000000;
 
 const uint8_t characters[] = {
     CHAR0, CHAR1, CHAR2, CHAR3,
@@ -91,27 +22,11 @@ const uint8_t characters[] = {
     CHAR_LED_HIGH
 };
 
-#define DIGIT1 0x01
-#define DIGIT2 0x02
-#define DIGIT3 0x04
-#define DIGIT4 0x08
-#define DIGIT_LED 0x80 // we reserve last bit of shift register for led
-#define DIGIT_NONE 0x00
-
-#define LED_DELAY 5
-#define CHAR_OFFSET 8
-
-// Rotary constants
-#define ROTARY_LEFT 1
-#define ROTARY_RIGHT 2
-#define ROTARY_NONE 0
-
 uint32_t microseconds_per_pulse(float bpm);
-
-void toggle_led();
 void setup_timer();
 void setup();
-void spi_send(uint16_t data);
+void display_spi_send(uint16_t data);
+void cv_spi_send(uint16_t data);
 void write_char_at_digit(uint8_t character, uint8_t digit);
 void write_midi(uint8_t command, uint8_t data);
 void usart_init();
@@ -120,26 +35,48 @@ void clock_midi();
 void stop_midi();
 void send_midi();
 void write_uart(uint8_t character);
+void write_cv(uint16_t data);
 
-void spi_send(uint16_t data) {
+void display_spi_send(uint16_t data) {
     uint8_t i;
 
-    LATCH_LOW();
+    DISPLAY_LATCH_LOW();
 
     for (i = 0; i < 16; i++) {
         if (data & MSB_16_BIT_HIGH) {
-            MOSI_HIGH();
+            DISPLAY_DATA_HIGH();
         } else {
-            MOSI_LOW();
+            DISPLAY_DATA_LOW();
         }
 
-        CLK_LOW();
-        CLK_HIGH();
+        DISPLAY_CLK_LOW();
+        DISPLAY_CLK_HIGH();
 
         data <<= 1;
     }
 
-    LATCH_HIGH();
+    DISPLAY_LATCH_HIGH();
+}
+
+void cv_spi_send(uint16_t data) {
+    uint8_t i;
+
+    CV_LATCH_LOW();
+
+    for (i = 0; i < 16; i++) {
+        if (data & MSB_16_BIT_HIGH) {
+            CV_DATA_HIGH();
+        } else {
+            CV_DATA_LOW();
+        }
+
+        CV_CLK_LOW();
+        CV_CLK_HIGH();
+
+        data <<= 1;
+    }
+
+    CV_LATCH_HIGH();
 }
 
 // Returns the number of microseconds that transpire
@@ -162,21 +99,20 @@ void usart_init() {
 }
 
 void setup() {
-    INIT_PORT();
-    INIT_LED();
-    INIT_ROTARY();
-    INIT_PCI_ROTARY();
-    INIT_PCI();
-    usart_init();
+    INIT_PORTB();
+    INIT_PORTD();
+    //INIT_ROTARY();
+    //INIT_PCI_ROTARY();
+    //INIT_PCI();
+    //usart_init();
 
-    LED_HIGH();
-    LATCH_HIGH();
-    CLK_HIGH();
+    DISPLAY_LATCH_HIGH();
+    CV_LATCH_HIGH();
+    DISPLAY_CLK_HIGH();
+    CV_CLK_HIGH();
 
     uc = microseconds_per_pulse(bpm);
-
     setup_timer();
-
     start_midi();
 }
 
@@ -192,14 +128,6 @@ void setup_timer() {
     sei();
 }
 
-void toggle_led() {
-    if(led == 1) {
-        led = 0;
-    } else {
-        led = 1;
-    }
-}
-
 ISR(TIMER1_COMPA_vect) {
     // If we have a match, clear the Flag register
     // and toggle the led.
@@ -208,7 +136,9 @@ ISR(TIMER1_COMPA_vect) {
 
     if(toggle_count >= MIDI_CLOCK_PRECISION * MIDI_BEATS_PER_MEASURE) {
         toggle_count = 0;
-        toggle_led();
+        write_cv(0x00);
+    } else {
+        write_cv(0x01);
     }
 }
 
@@ -247,16 +177,8 @@ ISR(PCINT_vect) {
     rotary_last = rotary_current;
 }
 
-void draw_led() {
-    if (led == 1) {
-        write_char_at_digit(CHAR_LED_HIGH, DIGIT_LED);
-    } else {
-        write_char_at_digit(CHAR_NONE, DIGIT_NONE);
-    }
-}
-
 void write_char_at_digit(uint8_t character, uint8_t digit) {
-    spi_send(character << CHAR_OFFSET | digit);
+    display_spi_send(character << CHAR_OFFSET | digit);
     _delay_ms(LED_DELAY);
 }
 
@@ -275,6 +197,11 @@ void send_midi() {
         clock_midi();
         pulse = 0;
     }
+}
+
+void write_cv(uint16_t data) {
+    cv_spi_send(data);
+    _delay_ms(LED_DELAY);
 }
 
 void clock_midi() {
@@ -340,11 +267,10 @@ int main(void) {
 
     while (1) {
         draw_display();
-        draw_led();
-        send_midi();
-
-        if(rotary_mask > 0) {
-            set_bpm();
-        }
+        //draw_led();
+        //send_midi();
+        //if(rotary_mask > 0) {
+        //    set_bpm();
+        //}
     }
 }

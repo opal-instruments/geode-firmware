@@ -6,13 +6,12 @@ LIBS=-static
 
 all: clean fmt deps
 	mkdir -p bin
-	$(CC) src/quartz.c -L$(LIB_DIR) $(LIBS) -mmcu=attiny2313 -Os -o bin/quartz.o
+	$(CC) src/quartz.c -L$(LIB_DIR) $(LIBS) -mmcu=attiny2313 -Os -static -o bin/quartz.o
 	$(OBJCOPY) -O ihex -R .eeprom bin/quartz.o bin/quartz.hex
 
 deps:
 	mkdir -p vendor/libs
 	mkdir -p vendor/build
-	ar -cvq vendor/libs/libtiny-midi-clock.a 
 
 clean:
 	rm -rf bin
@@ -23,4 +22,4 @@ fmt:
 	astyle --style=java --align-pointer=type --suffix=none $(SRC)
 
 upload:
-	sudo avrdude -p attiny2313 -c avrisp2 -U lfuse:w:0xFF:m -U hfuse:w:0xFF:m -U efuse:w:0xFF:m -U flash:w:bin/quartz.hex:i -b 2400 
+	sudo avrdude -p attiny2313 -c avrisp2 -s -U lfuse:w:0x64:m -U hfuse:w:0xdf:m -U efuse:w:0xff:m -U flash:w:bin/quartz.hex:i -b 2400
